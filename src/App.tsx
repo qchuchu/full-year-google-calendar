@@ -1,35 +1,67 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
+import { useEffect, useState } from 'react';
+import axios from 'axios';
+import FullCalendar from '@fullcalendar/react';
+import multiMonthPlugin from '@fullcalendar/multimonth'
+import { TokenResponse, useGoogleLogin } from '@react-oauth/google';
+import { GoogleCalendarEvent, GoogleCalendarEventResponse } from './type';
 
-function App() {
-  const [count, setCount] = useState(0)
+
+const GOOGLE_API_BASE_URL = "https://www.googleapis.com"
+
+const CALENDAR_EVENTS_READ_ONLY_SCOPE = `${GOOGLE_API_BASE_URL}/auth/calendar.events.readonly`
+
+const MARTA_AND_QUENTIN_CALENDAR_ID = "1a5c20261851f4bfa1241d49fc91dc05c3b9e40a67bc431292350085c7da21ae@group.calendar.google.com"
+
+const App = () => {
+  const [user, setUser] = useState<TokenResponse | null>(null);
+  const [events, setEvents] = useState<GoogleCalendarEvent[]>([]);
+
+  const login = useGoogleLogin({
+    onSuccess: (codeResponse) => setUser(codeResponse),
+    onError: (error) => console.log('Login Failed:', error),
+    scope: CALENDAR_EVENTS_READ_ONLY_SCOPE,
+  });
+
+  useEffect(() => {
+    const fetchCalendarEvents = async () => {
+      try {
+        const { data: { items }} = await axios.get<GoogleCalendarEventResponse>(`${GOOGLE_API_BASE_URL}/calendar/v3/calendars/${MARTA_AND_QUENTIN_CALENDAR_ID}/events`, {
+          headers: {
+            Authorization: `Bearer ${user?.access_token}`,
+          },
+        });
+
+        setEvents(items)
+      } catch (error) {
+        console.error(error);
+      }
+    };
+
+    if (user) {
+      fetchCalendarEvents();
+    }
+  }, [user]);
 
   return (
-    <>
-      <div>
-        <a href="https://vitejs.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.tsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-    </>
-  )
+    <div>
+      {user ? (
+        <FullCalendar
+          plugins={[multiMonthPlugin]}
+          initialView='multiMonthYear'
+          events={events.map(({ summary, start, end }) => ({
+            title: summary,
+            start: start.dateTime ?? start.date,
+            end: end.dateTime ?? end.date
+          }))}
+          multiMonthMaxColumns={2}
+          firstDay={1}
+          eventColor='green'
+        />
+      ) : (
+        <button onClick={() => login()}>Sign in with Google 🚀 </button>
+      )}
+    </div>
+  );
 }
 
-export default App
+export default App;
