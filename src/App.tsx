@@ -56,6 +56,7 @@ const App = () => {
           multiMonthMaxColumns={1}
           firstDay={1}
           eventColor='green'
+          viewHeight={"100vh"}
         />
       ) : (
         <button onClick={() => login()}>Sign in with Google 🚀 </button>
