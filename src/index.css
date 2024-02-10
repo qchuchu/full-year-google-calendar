@@ -51,3 +51,7 @@ button:focus-visible {
 .fc-daygrid-day-number, .fc-col-header-cell-cushion {
   color: green;
 }
+
+.fc-media-screen {
+  height: 100vh;
+}
