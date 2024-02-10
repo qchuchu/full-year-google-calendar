@@ -53,7 +53,7 @@ const App = () => {
             start: start.dateTime ?? start.date,
             end: end.dateTime ?? end.date
           }))}
-          multiMonthMaxColumns={2}
+          multiMonthMaxColumns={1}
           firstDay={1}
           eventColor='green'
         />
